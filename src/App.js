@@ -1,24 +1,35 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import UserProvider from './customHooks/UserProvider';
+import RequiereAuthUser from './components/RequiereAuthUser';
+import { Route, Routes } from 'react-router-dom';
+import Login from './components/Login';
+import Navigation from './components/Navigation';
+import Dashboard from './components/Dashboard';
+import NotFound from './components/NotFound';
+import * as Programas from './components/programasAcademicos';
+
+const theme = createTheme();
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <UserProvider>
+        <CssBaseline />
+        <Box sx={{ display: 'flex' }}>
+          <Routes>
+            <Route path='/' element={<Login />} />
+            <Route path='/login' element={<Login />} />
+            <Route path='*' element={<NotFound />} />
+            <Route path='/main' element={<RequiereAuthUser><Navigation /></RequiereAuthUser>}>
+              <Route index element={<Dashboard />} />
+              <Route path='dashboard' element={<Dashboard />} />
+              <Route path='*' element={<NotFound />} />
+            </Route>
+          </Routes>
+        </Box>
+      </UserProvider>
+    </ThemeProvider>
   );
 }
 
