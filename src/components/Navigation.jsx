@@ -1,31 +1,37 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { AppBar, Box, Button, Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
-import { Menu as MenuIcon, SchoolOutlined as SchoolOutlinedIcon, BookOutlined as BookOutlinedIcon, BeenhereOutlined as BeenhereOutlinedIcon, AssignmentIndOutlined as AssignmentIndOutlinedIcon, BadgeOutlined as BadgeOutlinedIcon, FaceOutlined as FaceOutlinedIcon } from '@mui/icons-material';
+import { Menu as MenuIcon, SchoolOutlined as SchoolOutlinedIcon, BookOutlined as BookOutlinedIcon, BeenhereOutlined as BeenhereOutlinedIcon, AssignmentIndOutlined as AssignmentIndOutlinedIcon, BadgeOutlined as BadgeOutlinedIcon, FaceOutlined as FaceOutlinedIcon, Workspaces as WorkspacesIcon } from '@mui/icons-material';
 import { useUserContext } from '../customHooks/UserProvider';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link as LinkRouter, useNavigate } from 'react-router-dom';
+import { setToken } from '../tools/api';
 
 const drawerWidth = 240;
 
 const optionsAdmin = [
-  {title: 'Programas académicos', icon: <SchoolOutlinedIcon />},
-  {title: 'Asignaturas', icon: <BookOutlinedIcon />},
-  {title: 'Docentes', icon: <BadgeOutlinedIcon />},
-  {title: 'Estudiantes', icon: <FaceOutlinedIcon />}
+  {title: 'Programas académicos', icon: <SchoolOutlinedIcon />, path: '/programas'},
+  {title: 'Asignaturas', icon: <BookOutlinedIcon />, path: '/asignaturas'},
+  {title: 'Docentes', icon: <BadgeOutlinedIcon />, path: '/docentes'},
+  {title: 'Estudiantes', icon: <FaceOutlinedIcon />, path: '/estudiantes'},
+  {title: 'Grupos', icon: <WorkspacesIcon />, path: '/grupos'}
 ];
 
 const optionsEstudiante = [
-  {title: 'Notas Parciales', icon: <BeenhereOutlinedIcon />},
-  {title: 'Matrícula', icon: <BookOutlinedIcon />}
+  {title: 'Notas Parciales', icon: <BeenhereOutlinedIcon />, path: '/notas'},
+  {title: 'Matrícula', icon: <BookOutlinedIcon />, path: '/matricula'}
 ];
 
 const optionsDocente = [
-  {title: 'Notas grupos', icon: <BeenhereOutlinedIcon />},
-  {title: 'Estudiantes grupos', icon: <AssignmentIndOutlinedIcon />}
+  {title: 'Notas grupos', icon: <BeenhereOutlinedIcon />, path: '/notas'},
+  {title: 'Estudiantes grupos', icon: <AssignmentIndOutlinedIcon />, path: '/grupos'}
 ];
+
+const LinkCustom = React.forwardRef((itemProps, ref) => {
+  return <LinkRouter ref={ref} {...itemProps} role={undefined} />;
+});
 
 const mapOptions = (opt, index) => (
   <ListItem key={opt.title} disablePadding>
-    <ListItemButton>
+    <ListItemButton LinkComponent={LinkCustom} to={'/main' + opt.path}>
       <ListItemIcon>
         {opt.icon}
       </ListItemIcon>
@@ -35,12 +41,19 @@ const mapOptions = (opt, index) => (
 );
 
 const Navigation = ({ window }) => {
-  const { user } = useUserContext();
+  const { user, setUser } = useUserContext();
+  const navigate = useNavigate();
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const logOut = () => {
+    setUser(null);
+    setToken(null);
+    navigate('/login', { replace: true })
   };
 
   const drawer = (
@@ -75,19 +88,19 @@ const Navigation = ({ window }) => {
             color='inherit'
             edge='start'
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ mr: 2, display: { md: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
           <Typography variant='h6' component='h1' noWrap sx={{ flexGrow: 1 }}>
             Portal Académico
           </Typography>
-          <Button color='inherit'>Cerrar Sesión</Button>
+          <Button color='inherit' onClick={logOut}>Cerrar Sesión</Button>
         </Toolbar>
       </AppBar>
       <Box
         component='nav'
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
       >
         <Drawer
           container={container}
@@ -98,7 +111,7 @@ const Navigation = ({ window }) => {
             keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
+            display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
         >
@@ -107,7 +120,7 @@ const Navigation = ({ window }) => {
         <Drawer
           variant='permanent'
           sx={{
-            display: { xs: 'none', sm: 'block' },
+            display: { xs: 'none', md: 'block' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
           open

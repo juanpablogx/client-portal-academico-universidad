@@ -5,7 +5,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { fetchApi, setToken } from '../tools/api';
 import { useUserContext } from '../customHooks/UserProvider';
-import Notification from './Notification';
+import Notification from './Notifications';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 

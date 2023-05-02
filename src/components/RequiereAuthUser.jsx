@@ -3,7 +3,7 @@ import { useUserContext } from '../customHooks/UserProvider';
 import { useNavigate } from 'react-router-dom';
 import { fetchApi, getToken, setToken } from '../tools/api';
 
-const RequiereAuthUser = ({ children }) => {
+const RequiereAuthUser = ({ children, tipoUser }) => {
   const { user, setUser } = useUserContext();
 
   const navigate = useNavigate();
@@ -11,8 +11,8 @@ const RequiereAuthUser = ({ children }) => {
   useEffect(() => {
     console.log(user);
     const auth = async () => {
-      if (!getToken()) {
-        navigate('/login', { replace: true })
+      if (!getToken() || (tipoUser instanceof Array && !tipoUser.includes(user?.tipo))) {
+        navigate('/login', { replace: true });
         return;
       }
 

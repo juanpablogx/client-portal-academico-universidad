@@ -12,10 +12,10 @@ const Main = () => {
   const { user } = useUserContext();
   const navigate = useNavigate();
 
-  const [ programas, setProgramas ] = useState([]);
+  const [ notas, setNotas ] = useState([]);
   const [ modo, setModo ] = useState('listar');
-  const editarPrograma = useRef(null);
-  const eliminarPrograma = useRef(null);
+  const editarNota = useRef(null);
+  const eliminarNota = useRef(null);
 
   const [ openDialog, setOpenDialog ] = useState(false);
   const [ openNotification, setOpenNotification ] = useState(false);
@@ -23,24 +23,24 @@ const Main = () => {
   const dataNotification = useRef({msg: '', severity: 'success'});
 
   useEffect(() => {
-    if (user?.tipo !== 'administrador') {
+    if (user?.tipo !== 'docente' && user?.tipo !== 'estudiante') {
       navigate('/main', { replace: true });
     }
   }, []);
 
-  const main = (
+  const mainDocente = (
     <>
-      <Typography variant='h4' component='h2' sx={{ mb: 2 }}>Programas Académicos</Typography>
+      <Typography variant='h4' component='h2' sx={{ mb: 2 }}>Notas Estudiantes</Typography>
       {modo === 'crear' ? <Form onReturn={() => setModo('listar')} /> : null}
-      {modo === 'editar' ? <Form onReturn={() => setModo('listar')} programa={editarPrograma.current} /> : null}
+      {modo === 'editar' ? <Form onReturn={() => setModo('listar')} nota={editarNota.current} /> : null}
       {modo === 'listar' ? 
         <>
           <List 
             setModo={setModo}
-            programas={programas}
-            setProgramas={setProgramas} 
-            editarProgramaRef={editarPrograma}
-            eliminarProgramaRef={eliminarPrograma}
+            notas={notas}
+            setNotas={setNotas} 
+            editarNotaRef={editarNota}
+            eliminarNotaRef={eliminarNota}
             setOpenDialogDelete={setOpenDialog}
           />
           <Fab 
@@ -57,7 +57,7 @@ const Main = () => {
       }
       <DialogDelete 
         open={openDialog} 
-        programa={eliminarPrograma.current} 
+        nota={eliminarNota.current} 
         onClose={() => {
           setModo('listar')
           setOpenDialog(false);
@@ -80,9 +80,14 @@ const Main = () => {
     </>
   );
 
+  const mainEstudiante = (
+    <div>Notas estudiante</div>
+  );
+
   return (
     <>
-      {user?.tipo === 'administrador' ? main : null}
+      {user?.tipo === 'docente' ? mainDocente : null}
+      {user?.tipo === 'estudiante' ? mainEstudiante : null}
     </>
   );
 };

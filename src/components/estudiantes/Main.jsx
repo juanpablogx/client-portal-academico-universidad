@@ -12,10 +12,10 @@ const Main = () => {
   const { user } = useUserContext();
   const navigate = useNavigate();
 
-  const [ programas, setProgramas ] = useState([]);
+  const [ estudiantes, setEstudiantes ] = useState([]);
   const [ modo, setModo ] = useState('listar');
-  const editarPrograma = useRef(null);
-  const eliminarPrograma = useRef(null);
+  const editarEstudiante = useRef(null);
+  const eliminarEstudiante = useRef(null);
 
   const [ openDialog, setOpenDialog ] = useState(false);
   const [ openNotification, setOpenNotification ] = useState(false);
@@ -30,17 +30,17 @@ const Main = () => {
 
   const main = (
     <>
-      <Typography variant='h4' component='h2' sx={{ mb: 2 }}>Programas Académicos</Typography>
+      <Typography variant='h4' component='h2' sx={{ mb: 2 }}>Estudiantes</Typography>
       {modo === 'crear' ? <Form onReturn={() => setModo('listar')} /> : null}
-      {modo === 'editar' ? <Form onReturn={() => setModo('listar')} programa={editarPrograma.current} /> : null}
+      {modo === 'editar' ? <Form onReturn={() => setModo('listar')} estudiante={editarEstudiante.current} /> : null}
       {modo === 'listar' ? 
         <>
           <List 
             setModo={setModo}
-            programas={programas}
-            setProgramas={setProgramas} 
-            editarProgramaRef={editarPrograma}
-            eliminarProgramaRef={eliminarPrograma}
+            estudiantes={estudiantes}
+            setEstudiantes={setEstudiantes} 
+            editarEstudianteRef={editarEstudiante}
+            eliminarEstudianteRef={eliminarEstudiante}
             setOpenDialogDelete={setOpenDialog}
           />
           <Fab 
@@ -57,7 +57,7 @@ const Main = () => {
       }
       <DialogDelete 
         open={openDialog} 
-        programa={eliminarPrograma.current} 
+        estudiante={eliminarEstudiante.current} 
         onClose={() => {
           setModo('listar')
           setOpenDialog(false);
