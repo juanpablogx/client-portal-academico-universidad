@@ -13,6 +13,8 @@ import * as Docentes from './components/docentes';
 import * as Estudiantes from './components/estudiantes';
 import * as Notas from './components/notas';
 import * as Grupos from './components/grupos';
+import * as EstudiantesGrupos from './components/estudiantesGrupos';
+import * as NotasParciales from './components/notasParciales';
 
 const theme = createTheme();
 
@@ -35,7 +37,9 @@ function App() {
               <Route path='docentes' element={<RequiereAuthUser><Docentes.Main /></RequiereAuthUser>} />
               <Route path='estudiantes' element={<RequiereAuthUser><Estudiantes.Main /></RequiereAuthUser>} />
               <Route path='grupos' element={<RequiereAuthUser><Grupos.Main /></RequiereAuthUser>} />
+              <Route path='estudiantes_grupos' element={<RequiereAuthUser><EstudiantesGrupos.Main /></RequiereAuthUser>} />
               <Route path='notas' element={<RequiereAuthUser><Notas.Main /></RequiereAuthUser>} />
+              <Route path='notas_parciales' element={<RequiereAuthUser><NotasParciales.Main /></RequiereAuthUser>} />
               <Route path='*' element={<RequiereAuthUser><NotFound /></RequiereAuthUser>} />
             </Route>
           </Routes>

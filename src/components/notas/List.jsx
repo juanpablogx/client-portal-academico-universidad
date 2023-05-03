@@ -1,63 +1,57 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchApi, getToken } from '../../tools/api';
 import Notification from '../Notifications';
-import { Box, LinearProgress } from '@mui/material';
-import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
-import { Delete as DeleteIcon, ModeEdit as ModeEditIcon } from '@mui/icons-material';
+import { Box, LinearProgress, MenuItem, TextField } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { useUserContext } from '../../customHooks/UserProvider';
+import { Decimal } from 'decimal.js-light';
 
 
-const List = ({ notas, setNotas, setModo, editarNotaRef, eliminarNotaRef, setOpenDialogDelete }) => {
-  const [openAlert, setOpenAlert] = useState(false);
+const List = ({ notas, setNotas, formikValues, openAlert, setOpenAlert, dataAlertRef }) => {
+  const { user } = useUserContext();
+
   const [cargando, setCargando] = useState(false);
-
-  const dataAlert = useRef({msg: '', severity: 'warning'});
+  
 
   const columnas = [
-    { field: 'id_prog', headerName: 'ID', type: 'number', minWidth: 70 },
-    { field: 'codigo', headerName: 'Código', minWidth: 100 },
-    { field: 'nombre_nota', headerName: 'Nombre', minWidth: 200 },
-    { field: 'nombre_facultad', headerName: 'Facultad', minWidth: 200 },
-    { field: 'tipo', headerName: 'Tipo', minWidth: 130 },
+    { field: 'codigo_estudiante', headerName: 'Código', minWidth: 100 },
+    { field: 'nombre_completo_estudiante', headerName: 'Estudiante', minWidth: 200 },
     {
-      field: 'actions', 
-      type: 'actions', 
-      minWidth: 130,
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<DeleteIcon />}
-          label='Eliminar'
-          onClick={() => {
-            eliminarNotaRef.current = params.row;
-            setOpenDialogDelete(true);
-            setModo('eliminar');
-          }}
-        />,
-        <GridActionsCellItem
-          icon={<ModeEditIcon />}
-          label='Editar'
-          onClick={() => {
-            editarNotaRef.current = params.row;
-            setModo('editar');
-          }}
-          showInMenu
-        />,
-      ]
+      field: 'nota', 
+      headerName: 'Nota', 
+      type: 'number', 
+      minWidth: 50,
+      editable: true,
+      valueParser: (value, params) => {
+        if (value === '') return '';
+        let nota = new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_DOWN);
+        if (nota.lessThan(0)) return 0;
+        if (nota.greaterThan(5)) return 5;
+        return nota.toNumber();
+      },
+      
     },
   ];
 
   useEffect(() => {
     const getNotas = async () => {
       try {
-        const response = await fetchApi(getToken()).get('/notas_academicos');
-        let listNotas = response.data?.notas;
-        setNotas(listNotas ?? []);
-        if (!listNotas || listNotas.length === 0) {
-          dataAlert.current = {msg: 'No hay notas para mostrar', severity: 'info'};
-          setOpenAlert(true);
+        if (formikValues.id_semestre && formikValues.id_grupo && formikValues.id_actividad) {
+          console.log(formikValues.id_semestre);
+          console.log(formikValues.id_grupo);
+          console.log(formikValues.id_actividad);
+          const response = await fetchApi(getToken()).get(`/notas_actividades/grupo_asignaturas/${formikValues.id_grupo}/actividad/${formikValues.id_actividad}`);
+          let listNotas = response.data.notasActividades;
+          console.log(listNotas);
+          setNotas(listNotas);
+          if (!listNotas || listNotas.length === 0) {
+            dataAlertRef.current = {msg: 'No hay notas para mostrar', severity: 'info'};
+            setOpenAlert(true);
+          }
         }
       } catch (err) {
         console.log(err);
-        dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        dataAlertRef.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
         setOpenAlert(true);
       }
       setCargando(false);
@@ -65,7 +59,7 @@ const List = ({ notas, setNotas, setModo, editarNotaRef, eliminarNotaRef, setOpe
 
     setCargando(true);
     getNotas();
-  }, []);
+  }, [formikValues.id_semestre, formikValues.id_grupo, formikValues.id_actividad]);
 
   return (
     <>
@@ -73,8 +67,8 @@ const List = ({ notas, setNotas, setModo, editarNotaRef, eliminarNotaRef, setOpe
       {openAlert ? 
       <Notification 
         onClose={() => {setOpenAlert(false)}}
-        mensaje={dataAlert.current.msg}
-        severity={dataAlert.current.severity}
+        mensaje={dataAlertRef.current.msg}
+        severity={dataAlertRef.current.severity}
       />
       : ''}
       <Box sx={{ pb: 2 }}>
@@ -82,11 +76,35 @@ const List = ({ notas, setNotas, setModo, editarNotaRef, eliminarNotaRef, setOpe
           sx={{ width: '100%' }}
           rows={notas}
           columns={columnas}
-          getRowId={(row) => row.id_prog}
+          getRowId={(row) => row.codigo_estudiante}
           initialState={{
             pagination: { paginationModel: { pageSize: 10 } }
           }}
           pageSizeOptions={[10, 15, 25]}
+          processRowUpdate={(updatedNota, oldNota) => {
+            console.log(updatedNota);
+            console.log(oldNota);
+            if (updatedNota.nota !== oldNota.nota) {
+              const codigo_estudiante = updatedNota.codigo_estudiante.trim();
+              const nota = updatedNota.nota === '' ? 0 : updatedNota.nota;
+              setNotas(state => {
+                let nuevasNotas = state.map((value, index) => {
+                  if (value.codigo_estudiante.trim() === codigo_estudiante) {
+                    return {...value, nota: new Decimal(nota).toDecimalPlaces(2, Decimal.ROUND_DOWN).toNumber()}
+                  } else {
+                    return value;
+                  }
+                });
+
+                return nuevasNotas;
+              });
+
+              return updatedNota;
+            } else {
+              return oldNota;
+            }
+          }}
+          onProcessRowUpdateError={err => console.log(err)}
         />
       </Box>
     </>

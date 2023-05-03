@@ -1,31 +1,20 @@
-import { Box, Button, Grid, LinearProgress, MenuItem, TextField, Typography } from '@mui/material';
+import { Box, Button, Grid, LinearProgress, TextField, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import Notification from '../Notifications';
 import { useFormik } from 'formik';
 import { fetchApi, getToken } from '../../tools/api';
 import * as Yup from 'yup';
 
-const Form = ({ onReturn, nota }) => {
+const Form = ({ onReturn, id_asig, id_semestre, numero_grupo }) => {
   const [openAlert, setOpenAlert] = useState(false);
   const [cargando, setCargando] = useState(false);
-
-  const [facultades, setFacultades] = useState([]);
-  const [tipos, setTipos] = useState([]);
 
   const dataAlert = useRef({msg: '', severity: 'warning'});
 
   useEffect(() => {
-    const facultadesPromise = fetchApi(getToken()).get('/facultades');
-    const tiposPromise = fetchApi(getToken()).get('/tipos_notas');
-    Promise.all([facultadesPromise, tiposPromise]).then(([ responseFacultades, responseTipos ]) => {
-      if (responseFacultades.data?.facultades && responseFacultades.data.facultades.length > 0) {
-        setFacultades(responseFacultades.data.facultades);
-      }
-      if (responseTipos.data?.tiposNotas && responseTipos.data.tiposNotas.length > 0) {
-        setTipos(responseTipos.data.tiposNotas);
-      }
-    });
-    console.log(nota);
+    console.log(id_asig);
+    console.log(id_semestre);
+    console.log(numero_grupo);
   }, []);
 
   const {
@@ -36,12 +25,9 @@ const Form = ({ onReturn, nota }) => {
     resetForm: resetFormikForm
   } = useFormik({
     initialValues: {
-      codigo: nota !== null && nota !== undefined ? nota.codigo : '',
-      nombre_nota: nota !== null && nota !== undefined ? nota.nombre_nota : '',
-      id_fac: nota !== null && nota !== undefined ? nota.id_fac : (facultades.length > 0 ? facultades[0].id_fac : ''),
-      id_tipo: nota !== null && nota !== undefined ? nota.id_tipo : (tipos.length > 0 ? tipos[0].id_tipo : ''),
+      descripcion: '',
+      porcentaje: '',
     },
-    enableReinitialize: true,
     onSubmit: (inputs) => {
       setCargando(true);
       const fetch = async () => {
@@ -49,22 +35,45 @@ const Form = ({ onReturn, nota }) => {
           let response = {};
           const config = {
             data: {
-              codigo: inputs.codigo,
-              nombre: inputs.nombre_nota,
-              id_fac: inputs.id_fac,
-              id_tipo: inputs.id_tipo,
+              id_asig: id_asig,
+              id_semestre: id_semestre,
+              numero_grupo: numero_grupo,
+              descripcion: inputs.descripcion,
+              porcentaje: inputs.porcentaje,
             }
           };
-          if (nota !== null && nota !== undefined) {
-            response = await fetchApi(getToken()).put(`/notas_academicos/${nota.id_prog}`, config);
-          } else {
-            response = await fetchApi(getToken()).post(`/notas_academicos`, config);
-          }
+          
+          response = await fetchApi(getToken()).post(`/actividades`, config);
+          const id_actividad = response.data.newActividad.id_actividad;
+          response = await fetchApi(getToken()).get(`/estudiantes_grupos/grupo/${id_asig}/${id_semestre}/${numero_grupo}`);
 
-          let msg = nota !== null && nota !== undefined ? 'editó' : 'creó';
-          let id = nota !== null && nota !== undefined ? response.data.updatedNota.id_prog : response.data.newNota.id_prog;
+          const promisesNotasActividades = [];
 
-          dataAlert.current = {msg: `Se ${msg} exitosamente el nota: ${id}`, severity: 'success'};
+          console.log(response.data.estudiantesGrupos);
+
+          response.data.estudiantesGrupos.forEach((value, index) => {
+            promisesNotasActividades.push(fetchApi(getToken()).post(`/notas_actividades`, {
+              data: {
+                codigo_estudiante: value.codigo_estudiante,
+                id_asig: id_asig,
+                id_semestre: id_semestre,
+                id_actividad: id_actividad
+              }
+            }));
+          });
+
+          Promise.all(promisesNotasActividades)
+            .then(responses => {
+              dataAlert.current = {msg: 'Se guardó con éxito', severity: 'success'}
+              setOpenAlert(true);
+            })
+            .catch(err => {
+              console.log(err);
+              dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+              setOpenAlert(true);
+            });
+
+          dataAlert.current = {msg: `Se creó exitosamente la actividad para este grupo`, severity: 'success'};
           setOpenAlert(true);
           setCargando(false);
           resetFormikForm();
@@ -78,10 +87,8 @@ const Form = ({ onReturn, nota }) => {
       fetch();
     },
     validationSchema: Yup.object({
-      codigo: Yup.string().max(4, 'Máx. 4 caracteres').required('Campo obligatorio'),
-      nombre_nota: Yup.string().max(30, 'Máx. 30 caracteres').required('Campo obligatorio'),
-      id_fac: Yup.number().required('Campo obligatorio'),
-      id_tipo: Yup.number().required('Campo obligatorio'),
+      descripcion: Yup.string().max(255, 'Máx. 255 caracteres').required('Campo obligatorio'),
+      porcentaje: Yup.number().integer('Solo valores enteros').min(1, 'Rango válido: 1-100').max(100, 'Rango válido: 1-100').required('Campo obligatorio'),
     })
   });
 
@@ -89,20 +96,19 @@ const Form = ({ onReturn, nota }) => {
     <>
       <Box component='form' onSubmit={e => formikSubmit(e)} noValidate sx={{ width: { md: '700px', xs: '400px' } }}>
         <LinearProgress sx={{ mb: 2, width: '100%', display: (cargando ? 'block' : 'none') }} />
-        <Typography variant='h5' component='h3'>{nota !== null && nota !== undefined ? 'Editar' : 'Crear'}</Typography>
+        <Typography variant='h5' component='h3'>Crear Actividad</Typography>
         <Grid container spacing={3}>
           <Grid item lg={6} sm={12}>
             <TextField
               margin='normal'
               fullWidth
               required
-              id='codigo'
-              label='Código'
-              name='codigo'
-              autoFocus
-              error={formikTouched.codigo && formikErrors.codigo?.length > 0}
-              helperText={formikErrors.codigo}
-              {...getFormikProps('codigo')}
+              id='descripcion'
+              label='Descripción'
+              name='descripcion'
+              error={formikTouched.descripcion && formikErrors.descripcion?.length > 0}
+              helperText={formikErrors.descripcion}
+              {...getFormikProps('descripcion')}
               size='small'
             />
           </Grid>
@@ -111,56 +117,15 @@ const Form = ({ onReturn, nota }) => {
               margin='normal'
               fullWidth
               required
-              name='nombre_nota'
-              label='Nombre'
-              id='nombre_nota'
-              error={formikTouched.nombre_nota && formikErrors.nombre_nota?.length > 0}
-              helperText={formikErrors.nombre_nota}
-              {...getFormikProps('nombre_nota')}
+              name='porcentaje'
+              label='Porcentaje'
+              id='porcentaje'
+              type='number'
+              error={formikTouched.porcentaje && formikErrors.porcentaje?.length > 0}
+              helperText={formikErrors.porcentaje}
+              {...getFormikProps('porcentaje')}
               size='small'
             />
-          </Grid>
-          <Grid item lg={6} sm={12}>
-            <TextField
-              margin='normal'
-              fullWidth
-              required
-              name='id_fac'
-              label='Facultad'
-              id='id_fac'
-              select
-              error={formikTouched.id_fac && formikErrors.id_fac?.length > 0}
-              helperText={formikErrors.id_fac}
-              {...getFormikProps('id_fac')}
-              size='small'
-            >
-              {facultades.map(fac => (
-                <MenuItem key={fac.id_fac} value={fac.id_fac}>
-                  {fac.nombre}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item lg={6} sm={12}>
-            <TextField
-              margin='normal'
-              fullWidth
-              required
-              name='id_tipo'
-              label='Tipo'
-              id='id_tipo'
-              select
-              error={formikTouched.id_tipo && formikErrors.id_tipo?.length > 0}
-              helperText={formikErrors.id_tipo}
-              {...getFormikProps('id_tipo')}
-              size='small'
-            >
-              {tipos.map(tipo => (
-                <MenuItem key={tipo.id_tipo} value={tipo.id_tipo}>
-                  {tipo.nombre}
-                </MenuItem>
-              ))}
-            </TextField>
           </Grid>
         </Grid>
         {openAlert ? 
@@ -176,7 +141,7 @@ const Form = ({ onReturn, nota }) => {
           color='primary'
           sx={{ mt: 3, mb: 2 }}
         >
-          {nota !== null && nota !== undefined ? 'Editar' : 'Crear'}
+          Crear Actividad
         </Button>
         <Button
           type='button'

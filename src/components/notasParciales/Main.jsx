@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { MenuItem, TextField, Typography } from '@mui/material';
-import { Add as AddIcon, Save as SaveIcon } from '@mui/icons-material';
 import { useUserContext } from '../../customHooks/UserProvider';
 import List from './List';
 import { useNavigate } from 'react-router-dom';
-import Form from './Form';
-import { NotificationEsquina } from '../Notifications';
-import OptionsEsquina from '../OptionsEsquina';
 import { fetchApi, getToken } from '../../tools/api';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -22,44 +18,9 @@ const Main = () => {
 
   const [grupos, setGrupos] = useState([]);
 
-  const [actividades, setActividades] = useState([]);
-
   const [openAlert, setOpenAlert] = useState(false);
 
   const dataAlert = useRef({msg: '', severity: 'warning'});
-
-  const [ openNotification, setOpenNotification ] = useState(false);
-
-  const dataNotification = useRef({msg: '', severity: 'success'});
-
-  const options = [
-    { icon: <AddIcon />, name: 'Crear actividad', onClick: () => setModo('crear') },
-    {
-      icon: <SaveIcon />, 
-      name: 'Guardar', 
-      onClick: () => {
-        const promises = [];
-        notas.forEach((value, index) => {
-          promises.push(fetchApi(getToken()).put(`/notas_actividades/${value.id_actividad}/${value.codigo_estudiante.trim()}/${value.id_asig}/${value.id_semestre}`, {
-            data: {
-              nota: value.nota
-            }
-          }));
-        });
-
-        Promise.all(promises)
-          .then(responses => {
-            dataNotification.current = {msg: 'Se guardó con éxito los cambios', severity: 'success'}
-            setOpenNotification(true);
-          })
-          .catch(err => {
-            console.log(err);
-            dataNotification.current = {msg: (err.response.status === 401 ? 'La sesión expiró, los cambios no podrán ser almacenados' : err.response.data.message), severity: 'error'};
-            setOpenNotification(true);
-          });
-      }
-    },
-  ];
 
   const {
     getFieldProps: getFormikProps, 
@@ -69,7 +30,6 @@ const Main = () => {
     initialValues: {
       id_semestre: '',
       id_grupo: '',
-      id_actividad: '',
     },
     enableReinitialize: true,
     onSubmit: (inputs) => {
@@ -78,20 +38,14 @@ const Main = () => {
     validationSchema: Yup.object({
       id_semestre: Yup.number(),
       id_grupo: Yup.string(),
-      id_actividad: Yup.number(),
     })
   });
 
   useEffect(() => {
-    if (user?.tipo !== 'docente') {
+    if (user?.tipo !== 'estudiante') {
       navigate('/main', { replace: true });
     }
   }, []);
-
-  useEffect(() => {
-    console.log('Notas:');
-    console.log(notas);
-  }, [notas]);
 
   useEffect(() => {
     const getSemestres = async () => {
@@ -118,8 +72,8 @@ const Main = () => {
     const getGrupos = async () => {
       try {
         if (formikValues.id_semestre) {
-          const responseGrupos = await fetchApi(getToken()).get(`/grupos_asignaturas_horarios/semestre/${formikValues.id_semestre}/docente/${user?.codigo_dni}`);
-          let listGrupos = responseGrupos.data.gruposAsignaturasHorarios;
+          const responseGrupos = await fetchApi(getToken()).get(`/estudiantes_grupos/${user?.codigo_dni.trim()}/semestre/${formikValues.id_semestre}`);
+          let listGrupos = responseGrupos.data.estudiantesGrupos;
           console.log(listGrupos);
           setGrupos(listGrupos);
           setFormikFieldValue('id_grupo', listGrupos.length > 0 ? `${listGrupos[0].id_asig}/${listGrupos[0].id_semestre}/${listGrupos[0].numero_grupo}` : '');
@@ -141,36 +95,9 @@ const Main = () => {
     getGrupos();
   }, [formikValues.id_semestre]);
 
-  useEffect(() => {
-    const getActividades = async () => {
-      try {
-        if (formikValues.id_grupo) {
-          const responseGrupos = await fetchApi(getToken()).get(`/actividades/grupo_asignatura/${formikValues.id_grupo}`);
-          let listActividades = responseGrupos.data.actividades;
-          setActividades(listActividades);
-          setFormikFieldValue('id_actividad', listActividades.length > 0 ? listActividades[0].id_actividad : '');
-          if (!listActividades || listActividades.length === 0) {
-            dataAlert.current = {msg: 'No hay actividades en este grupo', severity: 'warning'};
-            setOpenAlert(true);
-          }
-        } else {
-          setActividades([]);
-          setFormikFieldValue('id_actividad', '');
-        }
-      } catch (err) {
-        console.log(err);
-        dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
-        setOpenAlert(true);
-      }
-    }
-
-    getActividades();
-  }, [formikValues.id_grupo]);
-
   const main = (
     <>
-      <Typography variant='h4' component='h2' sx={{ mb: 2 }}>Notas Estudiantes</Typography>
-      {modo === 'crear' ? <Form onReturn={() => setModo('listar')} id_asig={formikValues.id_grupo.split('/')[0]} id_semestre={formikValues.id_semestre} numero_grupo={formikValues.id_grupo.split('/')[2]} /> : null}
+      <Typography variant='h4' component='h2' sx={{ mb: 2 }}>Notas Parciales</Typography>
       {modo === 'listar' ? 
         <>
           <TextField
@@ -205,22 +132,6 @@ const Main = () => {
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            margin='normal'
-            name='id_actividad'
-            label='Actividad'
-            id='id_actividad'
-            select
-            {...getFormikProps('id_actividad')}
-            size='small'
-            sx={{ ml: 2, minWidth: '150px' }}
-          >
-            {actividades.map(actividad => (
-              <MenuItem key={actividad.id_actividad} value={actividad.id_actividad}>
-                {`${actividad.descripcion} - ${actividad.porcentaje}%`}
-              </MenuItem>
-            ))}
-          </TextField>
           <List 
             notas={notas}
             setNotas={setNotas} 
@@ -229,22 +140,15 @@ const Main = () => {
             setOpenAlert={setOpenAlert}
             dataAlertRef={dataAlert}
           />
-          <OptionsEsquina opciones={options} />
         </> 
         : null
       }
-      <NotificationEsquina
-        mensaje={dataNotification.current.msg}
-        severity={dataNotification.current.severity}
-        open={openNotification}
-        onClose={() => setOpenNotification(false)}
-      />
     </>
   );
 
   return (
     <>
-      {user?.tipo === 'docente' ? main : null}
+      {user?.tipo === 'estudiante' ? main : null}
     </>
   );
 };

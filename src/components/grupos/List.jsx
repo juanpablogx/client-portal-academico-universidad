@@ -112,7 +112,8 @@ const List = ({ grupos, setGrupos, setModo, editarGrupoRef, eliminarGrupoRef, se
           select
           value={idSemestreActual}
           onChange={e => setIdSemestreActual(e.target.value)}
-          // size='small'
+          size='small'
+          sx={{ minWidth: '150px' }}
         >
           {semestres.map(semestre => (
             <MenuItem key={semestre.id_semestre} value={semestre.id_semestre}>

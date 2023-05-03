@@ -12,17 +12,16 @@ const optionsAdmin = [
   {title: 'Asignaturas', icon: <BookOutlinedIcon />, path: '/asignaturas'},
   {title: 'Docentes', icon: <BadgeOutlinedIcon />, path: '/docentes'},
   {title: 'Estudiantes', icon: <FaceOutlinedIcon />, path: '/estudiantes'},
-  {title: 'Grupos', icon: <WorkspacesIcon />, path: '/grupos'}
+  {title: 'Grupos', icon: <WorkspacesIcon />, path: '/grupos'},
+  {title: 'Asignación Estudiantes Grupos', icon: <AssignmentIndOutlinedIcon />, path: '/estudiantes_grupos'}
 ];
 
 const optionsEstudiante = [
-  {title: 'Notas Parciales', icon: <BeenhereOutlinedIcon />, path: '/notas'},
-  {title: 'Matrícula', icon: <BookOutlinedIcon />, path: '/matricula'}
+  {title: 'Notas Parciales', icon: <BeenhereOutlinedIcon />, path: '/notas_parciales'},
 ];
 
 const optionsDocente = [
   {title: 'Notas grupos', icon: <BeenhereOutlinedIcon />, path: '/notas'},
-  {title: 'Estudiantes grupos', icon: <AssignmentIndOutlinedIcon />, path: '/grupos'}
 ];
 
 const LinkCustom = React.forwardRef((itemProps, ref) => {
