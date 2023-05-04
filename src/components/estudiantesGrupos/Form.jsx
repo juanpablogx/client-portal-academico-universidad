@@ -28,7 +28,7 @@ const Form = ({ onReturn, id_asig, id_semestre, numero_grupo }) => {
     getFieldProps: getFormikProps, 
     handleSubmit: formikSubmit,
     touched: formikTouched,
-    resetForm: resetFormikForm
+    resetForm: resetFormikForm,
   } = useFormik({
     initialValues: {
       codigo_estudiante: estudiantes.length > 0 ? estudiantes[0].codigo_dni : '',
@@ -51,11 +51,30 @@ const Form = ({ onReturn, id_asig, id_semestre, numero_grupo }) => {
           response = await fetchApi(getToken()).post(`/estudiantes_grupos`, config);
           let id = response.data.newEstudianteGrupo.codigo_estudiante;
 
+          const responseGrupos = await fetchApi(getToken()).get(`/actividades/grupo_asignatura/${id_asig}/${id_semestre}/${numero_grupo}`);
+          let listActividades = responseGrupos.data.actividades;
+          console.log(listActividades);
+
+          const promises = [];
+          listActividades.forEach((value, index) => {
+            promises.push(fetchApi(getToken()).post(`/notas_actividades`, {
+              data: {
+                codigo_estudiante: inputs.codigo_estudiante,
+                id_asig: id_asig,
+                id_semestre: id_semestre,
+                id_actividad: value.id_actividad,
+              }
+            }));
+          });
+  
+          const rr = await Promise.all(promises);
+
           dataAlert.current = {msg: `Se añadió exitosamente el estudiante: ${id}`, severity: 'success'};
           setOpenAlert(true);
           setCargando(false);
           resetFormikForm();
         } catch (err) {
+          console.log(err);
           dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
           setOpenAlert(true);
           setCargando(false);

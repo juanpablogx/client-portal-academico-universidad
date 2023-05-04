@@ -59,7 +59,7 @@ const Form = ({ onReturn, asignatura }) => {
           let msg = asignatura !== null && asignatura !== undefined ? 'editó' : 'creó';
           let id = asignatura !== null && asignatura !== undefined ? response.data.updatedAsignatura.id_asig : response.data.newAsignatura.id_asig;
 
-          dataAlert.current = {msg: `Se ${msg} exitosamente el programa: ${id}`, severity: 'success'};
+          dataAlert.current = {msg: `Se ${msg} exitosamente la asignatura: ${id}`, severity: 'success'};
           setOpenAlert(true);
           setCargando(false);
           resetFormikForm();
