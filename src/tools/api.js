@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const URL_API = 'http://localhost:4000/';
+const URL_API = process.env.REACT_APP_URL_API;
 
 const fetchApi = jwtTokenUsuario => {
   const config = {
