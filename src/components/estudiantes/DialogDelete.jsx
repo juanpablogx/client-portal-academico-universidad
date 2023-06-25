@@ -15,7 +15,11 @@ const DialogDelete = ({ estudiante, open, onClose, onSuccess, onError }) => {
       }
     } catch (err) {
       console.log(err);
-      onError(err.response.status === 401 ? 'No tiene acceso a esta función' : err.response.data.message);
+      if (err.code === 'ERR_NETWORK') {
+        onError('El servidor no responde');
+      } else {
+        onError(err.response.status === 401 ? 'No tiene acceso a esta función' : err.response.data.message);
+      }
       onClose();
     }
   };

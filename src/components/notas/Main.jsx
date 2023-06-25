@@ -54,7 +54,11 @@ const Main = () => {
           })
           .catch(err => {
             console.log(err);
-            dataNotification.current = {msg: (err.response.status === 401 ? 'La sesión expiró, los cambios no podrán ser almacenados' : err.response.data.message), severity: 'error'};
+            if (err.code === 'ERR_NETWORK') {
+              dataNotification.current = {msg: 'El servidor no responde', severity: 'error'};
+            } else {
+              dataNotification.current = {msg: (err.response.status === 401 ? 'La sesión expiró, los cambios no podrán ser almacenados' : err.response.data.message), severity: 'error'};
+            }
             setOpenNotification(true);
           });
       }
@@ -106,7 +110,11 @@ const Main = () => {
         }
       } catch (err) {
         console.log(err);
-        dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        if (err.code === 'ERR_NETWORK') {
+          dataAlert.current = {msg: 'El servidor no responde', severity: 'error'};
+        } else {
+          dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        }
         setOpenAlert(true);
       }
     }
@@ -133,7 +141,11 @@ const Main = () => {
         }
       } catch (err) {
         console.log(err);
-        dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        if (err.code === 'ERR_NETWORK') {
+          dataAlert.current = {msg: 'El servidor no responde', severity: 'error'};
+        } else {
+          dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        }
         setOpenAlert(true);
       }
     }
@@ -159,7 +171,11 @@ const Main = () => {
         }
       } catch (err) {
         console.log(err);
-        dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        if (err.code === 'ERR_NETWORK') {
+          dataAlert.current = {msg: 'El servidor no responde', severity: 'error'};
+        } else {
+          dataAlert.current = {msg: (err.response.status === 401 ? 'La sesión expiró, inicia sesión' : err.response.data.message), severity: 'error'};
+        }
         setOpenAlert(true);
       }
     }
