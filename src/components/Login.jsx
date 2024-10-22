@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Avatar, Box, Button, Container, LinearProgress, TextField, Typography } from '@mui/material';
-import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
+import { LockOutlined as LockOutlinedIcon, School as SchoolIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { fetchApi, setToken } from '../tools/api';
@@ -87,10 +87,10 @@ const Login = () => {
       >
         {cargando ? <LinearProgress sx={{ mb: 3, width: '100%' }} /> : ''}
         <Avatar sx={{ m: 1, mt: 4, bgcolor: 'primary.dark' }}>
-          <LockOutlinedIcon />
+          <SchoolIcon />
         </Avatar>
-        <Typography component='h1' variant='h5'>
-          Iniciar Sesión
+        <Typography component='h1' variant='h5' sx={{ textAlign: 'center' }}>
+          Iniciar Sesión en Portal Académico Universitario
         </Typography>
         <Box component='form' onSubmit={e => formikSubmit(e)} noValidate sx={{ mt: 2 }}>
           <TextField
